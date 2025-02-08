@@ -1,12 +1,12 @@
 # Prepare imports.
 import pandas as pd
-import RapidUseML as RuM # If failing here, run "pip install RapidUseML" in terminal.
+import RapidUseML as RuM # If failing here, run "pip install RapidUseML" in terminal / CMD.
 
 class Tools:
 
     # Prepare tool schemas.
     # WHY: The models need to know what tools they have and how they tools work.
-    tool_schemas = {
+    TOOL_SCHEMAS = {
         "name": "evaluate_design",
         "description": (
             "Given the inputs phi_d, j_d, df and j, return the values of efficiency eta_poly, "

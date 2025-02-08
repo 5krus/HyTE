@@ -1,5 +1,3 @@
-## HyTE CONTROLS
-
 # Obtain OpenAI key from .env file.
 # WHY: Key is necessary for LLM queries to provide results. Key is held in env file for privacy.
 import dotenv, os; dotenv.load_dotenv()
@@ -9,6 +7,8 @@ KEY = os.getenv("OPENAI_API_KEY")
 # WHY: Costs, intelligence, and timings need to be controllable to avoid going overboard.
 OPTIONS = {
     "iterations": 10,
+    "logging": True,
+    "print-process": True,
     "models": {
         "hypothesizer": "o3-mini-high",
         "experimenter": "4o-mini",
