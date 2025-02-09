@@ -6,7 +6,7 @@ class Tools:
 
     # Prepare tool schemas.
     # WHY: The models need to know what tools they have and how they tools work.
-    TOOL_SCHEMAS = {
+    TOOL_SCHEMA = {
         "name": "evaluate_design",
         "description": (
             "Given the inputs phi_d, j_d, df and j, return the values of efficiency eta_poly, "
@@ -66,9 +66,8 @@ class Tools:
         # Create an instance of CFD-ML modelling class.
         ml = RuM.ML()
 
-        # Get predictions.
+        # Get and return predictions.
         predictions = {}
         for target_column_name in ["eta_poly", "phi_op", "Cptt"]:
             predictions[target_column_name] = ml.predict(input_df, target_column_name)
-
         return pd.DataFrame(predictions)

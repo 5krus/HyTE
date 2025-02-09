@@ -7,12 +7,15 @@ KEY = os.getenv("OPENAI_API_KEY")
 # WHY: Costs, intelligence, and timings need to be controllable to avoid going overboard.
 OPTIONS = {
     "iterations": 10,
-    "logging": True,
     "print-process": True,
+    "logging": {
+        "log": True,
+        "folder": "logs"
+    },
     "models": {
-        "hypothesizer": "o3-mini-high",
+        "hypothesizer": "4o-mini",
         "experimenter": "4o-mini",
-        "evaluator": "o3-mini-high",
+        "evaluator": "4o-mini",
         "snitch": "4o-mini"
     },
     "parallelisation": {
