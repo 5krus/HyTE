@@ -1,11 +1,10 @@
 # Preparing imports.
 from setuptools import setup, find_packages
-import codecs
 import os
 
 # Prepare project details.
-VERSION = '0.0.3'
-DESCRIPTION = 'LLM-based hypothesize-test-evaluate automation.'
+VERSION = '0.1.0'
+DESCRIPTION = 'LLM-based hypothesiSEze-test-evaluate automation.'
 LONG_DESCRIPTION = ('A package that allows for LLMs to create hypotheses, test them '
                     'experimentally, and evaluate whether their hypotheses were correct - within '
                     'a loop. As the process loops, the LLMs iterate towards discovey of insights.'
@@ -13,7 +12,7 @@ LONG_DESCRIPTION = ('A package that allows for LLMs to create hypotheses, test t
 
 # Obtain read-me details for long description.
 current_location = os.path.abspath(os.path.dirname(__file__))
-with codecs.open(os.path.join(current_location, "README.md"), encoding="utf-8") as fh:
+with open(os.path.join(current_location, "README.md"), encoding="utf-8") as fh:
     long_description = "\n" + fh.read()
 
 # Setting up package details.
@@ -35,7 +34,7 @@ setup(
         'experimentation',
         'scientific method'],
     classifiers=[
-        "Development Status :: 1 - Planning",
+        "Development Status :: 2 - Pre-Alpha",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3",
         "Operating System :: Unix",

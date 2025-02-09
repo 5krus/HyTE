@@ -1,1 +1,1 @@
-from iterator import *
+from .iterator import *
