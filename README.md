@@ -5,20 +5,19 @@ Tooling for running LLM-based Hypothesize-Test-Evaluate methodology.
 <br/><br/>
 
 #### Process Diagram:
-<div style="float: left; margin-right: 1em;">
-  <img src="https://i.imgur.com/i2e2Z0k.png" width="450px" />
+<div style="display: flex; align-items: flex-start;">
+  <div style="margin-right: 1em;">
+    <img src="https://i.imgur.com/i2e2Z0k.png" width="900px" />
+  </div>
+  <p>
+    Models creates a hypothesis, tests it experimentally, and evaluates
+    whether the results support the original idea. This new information
+    is fed back into the Hypothesis LL, giving it further context for
+    its next hypothesis. This loop occurs ITERATION number of times.
+    <br/><br/>
+    This methodology and tooling is (mostly) field, experiment, and model agnostic.
+  </p>
 </div>
-
-Models creates a hypothesis, tests it experimentally, and evaluates
-whether the results support the original idea. This new information
-is fed back into the Hypothesis LL, giving it further context for
-its next hypothesis. This loop occurs `ITERATION` number of times.
-
-This methodology and tooling is (mostly) field, experiment, and model agnostic.This methodology and tooling is (mostly) field, experiment and model agnostic.
-
-<br clear="all"/>
-
-
 
 ## Installation:
 The package is available through PyPI; it is installed with the following command:
