@@ -4,7 +4,7 @@ import codecs
 import os
 
 # Prepare project details.
-VERSION = '0.0.2'
+VERSION = '0.0.3'
 DESCRIPTION = 'LLM-based hypothesize-test-evaluate automation.'
 LONG_DESCRIPTION = ('A package that allows for LLMs to create hypotheses, test them '
                     'experimentally, and evaluate whether their hypotheses were correct - within '
@@ -28,12 +28,12 @@ setup(
     packages=find_packages(),
     install_requires=['openai', 'python-dotenv'],
     keywords=[
-        'python',
         'llm',
         'optimisation',
         'whittle laboratory',
         'reasoning',
-        'experimentation'],
+        'experimentation',
+        'scientific method'],
     classifiers=[
         "Development Status :: 1 - Planning",
         "Intended Audience :: Developers",
