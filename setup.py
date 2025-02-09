@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 import os
 
 # Prepare project details.
-VERSION = '0.1.0'
-DESCRIPTION = 'LLM-based hypothesiSEze-test-evaluate automation.'
+VERSION = '0.1.1'
+DESCRIPTION = 'LLM-based hypothesize-test-evaluate automation.'
 LONG_DESCRIPTION = ('A package that allows for LLMs to create hypotheses, test them '
                     'experimentally, and evaluate whether their hypotheses were correct - within '
                     'a loop. As the process loops, the LLMs iterate towards discovey of insights.'
