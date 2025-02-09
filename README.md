@@ -21,7 +21,7 @@ Primary usage only requires one command, `Iterator.run(...)`. i.e.
 
 ```
 # Prepare imports.
-from HyTE import *          # LLM-based Hypothesize-Test-Evaluate iterator.
+from HyTE import *    # Obtain LLM-based Hypothesize-Test-Evaluate iterator.
 
 # Run the iterator.
 [summary, full_log] = Iterator().run(SYSTEM_PROMPTS, OPTIONS, KEY, Tools(), sample_data = None)
