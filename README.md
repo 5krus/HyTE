@@ -1,13 +1,13 @@
 ![HyTE Logo](https://i.imgur.com/VuzljTm.gif)
 
 ## Description:
-Tooling for running LLM-based Hypothesize-Test-Evaluate methodology.
+Tooling for LLM-based Hypothesize-Test-Evaluate methodology.
 <br/><br/>
 
 #### Process Diagram:
 <img src="https://i.imgur.com/i2e2Z0k.png" width=40%>
 
-Models creates a hypothesis, test it experimentally, and evalaute whether the results support the original idea. This new information is fed back into the Hypothesis LLM, giving it further context for its next hypothesis. This loop occurs `ITERATION` number of times. <br/><br/>This methodology and tooling is (mostly) field, experiment and model agnostic.
+Models create a hypothesis, test it experimentally, and evalaute whether the results support their original idea. This new information is fed back into the Hypothesis LLM, giving it further context for its next hypothesis. This loop occurs `ITERATION` number of times. <br/><br/>This methodology and tooling is (mostly) field, experiment and model agnostic.
 
 ## Installation:
 The package is available through [PyPI](https://pypi.org/project/HyTE/0.0.1/); it is installed with the following command:
