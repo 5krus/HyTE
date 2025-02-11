@@ -1,7 +1,7 @@
 ![HyTE Logo](https://i.imgur.com/VuzljTm.gif)
 
 ## Description:
-Tooling for LLM-based Hypothesize-Test-Evaluate methodology.
+Automation of LLM-based Hypothesize-Test-Evaluate methodology.
 <br/><br/>
 
 #### Process Diagram:
