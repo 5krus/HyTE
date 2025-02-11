@@ -25,7 +25,7 @@ setup(
     long_description_content_type="text/markdown",
     long_description=long_description,
     packages=find_packages(),
-    install_requires=['openai', 'python-dotenv'],
+    install_requires=['openai', 'python-dotenv', 'setuptools', 'wheel'],
     keywords=[
         'llm',
         'optimisation',
