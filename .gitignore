@@ -1,0 +1,9 @@
+.env
+.DS_Store
+*.egg-info*
+*__pycache__*
+*.tar.gz*
+.fleet
+.fleet/*
+.whl
+run_*.txt
