@@ -65,7 +65,7 @@ class Tools: # pylint: disable=too-few-public-methods.
         input_df = pd.DataFrame(experiments, columns=["phi_d", "j_d", "df", "j"])
 
         # Create an instance of CFD-ML modelling class.
-        ml = RuM.ML()   # pylint: disable=no-member.
+        ml = RuM.ML()  # pylint: disable=no-member.
 
         # Get and return predictions.
         predictions = {}
