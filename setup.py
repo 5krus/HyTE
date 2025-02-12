@@ -1,7 +1,7 @@
 """
 Package Setup Settings.
 
-This script manages the details of PyPI deployments.
+This script manages the details of PyPI deployments. 
 """
 
 # Preparing imports.
