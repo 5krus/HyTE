@@ -1,3 +1,8 @@
+"""
+The Iterator module defines classes necessary for running Hypothesize-Test-Evaluate loops.
+## FUTURE ERYK: THIS IS STUPID FORMATTING. SPLIT INTO ITERATOR AND SUPPORT, MAKE FORMER EAT LATER.
+"""
+
 # Prepare imports.
 import os                          # Allows for accessing local system (e.g. to save logs).
 import json                        # Allows for simple handling of tool schemas for LLM use.
@@ -6,6 +11,9 @@ from openai import OpenAI          # Allows for OpenAI model access with keys vi
 from rich import print as rprint   # Allows for custom (colourful) text printing in terminal.
 
 class Iterator:
+    """
+    The Iterator class defines functions necessary to compelte the Hypothesize-Test-Evaluate loop.
+    """
 
     def __init__(self):
         self.full_log = ""
@@ -40,7 +48,7 @@ class Iterator:
         self.logging_enabled = options["logging"].get("log", True)
         self.logging_folder = options["logging"].get("folder", True)
         if self.logging_enabled: self.timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.client = OpenAI(api_key=key or (rprint("[red]Error loading OpenAI key.[/red]") or None))
+        self.client = OpenAI(api_key=key or (rprint("[red]OpenAI key load error.[/red]") or None))
 
         # Initialise history as empty.
         # WHY: These will be used to pass context to subsquent iterations but no history exists yet.

@@ -1,6 +1,14 @@
+"""
+Package Control Settings.
+
+This script shows how to structure controls variables such that they can be consumed by HyTE.
+"""
+
 # Obtain OpenAI key from .env file.
 # WHY: Key is necessary for LLM queries to provide results. Key is held in env file for privacy.
-import dotenv, os; dotenv.load_dotenv()
+import os
+import dotenv
+dotenv.load_dotenv()
 KEY = os.getenv("OPENAI_API_KEY")
 
 # Define properties of models and iterator.
@@ -33,11 +41,15 @@ SYSTEM_PROMPTS = [
     # Hypothesis Generator.
     """
     You are an expert in Turbomachinery.
-    You want to discover new insights into the relationships the provided parameters have with polytropic efficiency of the designs.
-    Use your knowledge of aeronautical engineering to uncover insights based on the information you recieve and the experiments you run.
+    You want to discover new insights into the relationships the provided parameters have with
+    polytropic efficiency of the designs.
+    Use your knowledge of aeronautical engineering to uncover insights based on the information you
+    recieve and the experiments you run.
 
-    You will be given data and information that contains performance characteristics of various electric ducted fan blade geometries.
-    The variables represent non-dimensional parameters and experimental outcomes from a rapid testing rig designed to analyze blade design performance.
+    You will be given data and information that contains performance characteristics of various
+    electric ducted fan blade geometries.
+    The variables represent non-dimensional parameters and experimental outcomes from a rapid
+    testing rig designed to analyze blade design performance.
 
     Here are the input variables:
     - phi_d: Design flow coefficient, a key aerodynamic parameter. phi_d limits: (0.3, 1)
@@ -65,7 +77,8 @@ SYSTEM_PROMPTS = [
     phi_d: X, j_d: X, df: X, j: X - eta_poly: Y, phi_op: Y, Cptt: Y
     Where each new line indicates a different experiment.
 
-    Remember, these experiments are to be ran in the future, so only provide the inputs (phi_d, j_d, df, j).
+    Remember, these experiments are to be ran in the future, so only provide the inputs
+    (phi_d, j_d, df, j).
     Keep the outputs (eta_poly, phi_op, Cptt) filled with the placeholder Y.
 
     Please do not make anything bold or italics.\n\n
@@ -73,11 +86,15 @@ SYSTEM_PROMPTS = [
     # Results Evaluator.
     """
     You are an expert in Turbomachinery because you are a researcher in Turbomachinery.
-    You are given the results of one or more experiments and you want to evaluate whether they support the hypothesis.
-    You want to use your knowledge of aeronautical engineering to evaluate whether any interesting insights were uncovered based on the information you recieve and the experiments ran.
+    You are given the results of one or more experiments and you want to evaluate whether they
+    support the hypothesis.
+    You want to use your knowledge of aeronautical engineering to evaluate whether any interesting
+    insights were uncovered based on the information you recieve and the experiments ran.
 
-    You will be given data and information that contains performance characteristics of various electric ducted fan blade geometries.
-    The variables represent non-dimensional parameters and experimental outcomes from a rapid testing rig designed to analyze blade design performance.
+    You will be given data and information that contains performance characteristics of various
+    electric ducted fan blade geometries.
+    The variables represent non-dimensional parameters and experimental outcomes from a rapid
+    testing rig designed to analyze blade design performance.
 
     Here are the input variables:
     - phi_d: Design flow coefficient, a key aerodynamic parameter. phi_d limits: (0.3, 1)
@@ -90,7 +107,8 @@ SYSTEM_PROMPTS = [
     - phi_op: Operational flow coefficient, derived from axial velocities.
     - Cptt: Thrust coefficient, used to evaluate the aerodynamic thrust generated.
 
-    Evaluate whether the hypothesis is supported by the experiment data and whether any new insights were found.
+    Evaluate whether the hypothesis is supported by the experiment data and whether any new insights
+    were found.
     Consider suggesting improvements, idea directions. This is a discussion.
     (Keep in mind that the researcher is limited to 10 experiments per hypothesis.)
 
@@ -99,10 +117,13 @@ SYSTEM_PROMPTS = [
     # Experiment Runner.
     """
     You are an experiment runner in a turbomachinery laboratory.
-    You have access to a tool that evaluates designs based on their parameters (evaluate designs) and a list of expeirments to run.
+    You have access to a tool that evaluates designs based on their parameters (evaluate designs)
+    and a list of expeirments to run.
 
-    You will be given data and information that contains performance characteristics of various electric ducted fan blade geometries.
-    The variables represent non-dimensional parameters and experimental outcomes from a rapid testing rig designed to analyze blade design performance.
+    You will be given data and information that contains performance characteristics of various
+    electric ducted fan blade geometries.
+    The variables represent non-dimensional parameters and experimental outcomes from a rapid
+    testing rig designed to analyze blade design performance.
 
     Here are the input variables:
     - phi_d: Design flow coefficient, a key aerodynamic parameter. phi_d limits: (0.3, 1)
@@ -119,10 +140,12 @@ SYSTEM_PROMPTS = [
     phi_d: X, j_d: X, df: X, j: X - eta_poly: Y, phi_op: Y, Cptt: Y
     phi_d: X, j_d: X, df: X, j: X - eta_poly: Y, phi_op: Y, Cptt: Y
     phi_d: X, j_d: X, df: X, j: X - eta_poly: Y, phi_op: Y, Cptt: Y
-    The presence of Y means that the experiment has not ran yet. The Y's should be replaced by numbers.
+    The presence of Y means that the experiment has not ran yet. The Y's should be replaced by
+    numbers.
     Where each new line indicates a different experiment.
 
-    Your task is to extract all the incomplete experiment rows and input them into the tool you have as a JSON array of arrays.
+    Your task is to extract all the incomplete experiment rows and input them into the tool you
+    have as a JSON array of arrays.
     Each inner array should contain exactly four numbers corresponding to [phi_d, j_d, df, j].
     Insert only into the function the JSON array (with no additional text).
 
@@ -141,7 +164,8 @@ SYSTEM_PROMPTS = [
     # Experiment Completion Checker.
     """
     You are an experiment checker in a tubomachinery laboratory.
-    You will be provided a table with experiments. If they have X and Y in lieu of values, the experiments are not complete.
+    You will be provided a table with experiments. If they have X and Y in lieu of values, the
+    experiments are not complete.
     If all the parmaters have numerical values, then the experiments have been complete.
     You are checking whether all experiments have been completed.
 

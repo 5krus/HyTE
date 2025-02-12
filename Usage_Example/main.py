@@ -1,7 +1,17 @@
+"""
+Hyte Usage Example.
+
+This script shows how to use HyTE with a practical example.
+"""
+
 # Prepare imports.
-from HyTE import *          # LLM-based Hypothesize-Test-Evaluate iterator.
-from tools import *         # Functions, and their descriptions, for LLMs to use.
-from controls import *      # Prompts, tools, keys, and other consumables used by the iterator.
+from hyte import Iterator            # LLM-based Hypothesize-Test-Evaluate iterator.
+import tools                         # Functions, and their descriptions, for LLMs to use.
+import controls                      # Prompts, tools, keys, and other consumables used by iterator.
 
 # Run the iterator.
-[summary, full_log] = Iterator().run(SYSTEM_PROMPTS, OPTIONS, KEY, Tools(), sample_data = None)
+[summary, full_log] = Iterator().run(controls.SYSTEM_PROMPTS, # pylint: disable=not-callable.
+                                     controls.OPTIONS,
+                                     controls.KEY,
+                                     tools.Tools(),
+                                     sample_data = None)
