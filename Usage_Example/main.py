@@ -10,7 +10,7 @@ import tools                         # Functions, and their descriptions, for LL
 import controls                      # Prompts, tools, keys, and other consumables used by iterator.
 
 # Run the iterator.
-[summary, full_log] = Iterator().run(controls.SYSTEM_PROMPTS, # pylint: disable=not-callable.
+[summary, full_log] = Iterator().run(controls.SYSTEM_PROMPTS, # pylint: disable=not-callable. 
                                      controls.OPTIONS,
                                      controls.KEY,
                                      tools.Tools(),
