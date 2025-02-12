@@ -1,12 +1,12 @@
 """
 Package Setup Settings.
 
-This script manages the details of PyPI deployments. 
+This script manages the details of PyPI deployments.
 """
 
 # Preparing imports.
 import os
-from setuptools import setup, find_packages 
+from setuptools import setup, find_packages
 
 # Prepare project details.
 VERSION = '0.1.3'
