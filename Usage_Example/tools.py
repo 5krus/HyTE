@@ -1,18 +1,29 @@
+"""
+Tool Usage Example.
+
+This script shows how function-based tools can be made accessible to LLMs.
+"""
+
 # Prepare imports.
+import warnings
 import pandas as pd
 import RapidUseML as RuM  # If failing here, run "pip install RapidUseML" in Terminal / CMD.
+from sklearn.exceptions import InconsistentVersionWarning
 
-
-class Tools:
+class Tools: # pylint: disable=too-few-public-methods.
+    """
+    This class defines functions that are used as tools by LLMs, as well as their tool schemas
+    describing how the tools are used.
+    """
 
     # Prepare tool schemas.
     # WHY: The models need to know what tools they have and how they tools work.
     TOOL_SCHEMA = [{
         "name": "evaluate_design",
         "description": (
-            "Given an array of experiments, where each experiment is represented as an array of four numbers "
-            "[phi_d, j_d, df, j], return an array of predictions. Each prediction is an object containing "
-            "the keys: eta_poly, phi_op, and Cptt."
+            "Given an array of experiments, where each experiment is represented as an array of "
+            "four numbers [phi_d, j_d, df, j], return an array of predictions. Each prediction is "
+            "an object containing the keys: eta_poly, phi_op, and Cptt."
         ),
         "parameters": {
             "type": "object",
@@ -48,15 +59,13 @@ class Tools:
         """
 
         ## Suppressing warnings from RapidUseML to have a clean terminal. Issue is version related.
-        import warnings
-        from sklearn.exceptions import InconsistentVersionWarning
         warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
         # Convert the list of experiment dicts to a DataFrame.
         input_df = pd.DataFrame(experiments, columns=["phi_d", "j_d", "df", "j"])
 
         # Create an instance of CFD-ML modelling class.
-        ml = RuM.ML()
+        ml = RuM.ML()   # pylint: disable=no-member.
 
         # Get and return predictions.
         predictions = {}
