@@ -107,11 +107,8 @@ class Iterator:
 
             # Run experiments until the experiment table is complete.
             # WHY: Ensures all experiments desired by the hypothesizer are done before progessing.
-            experiments = self.run_experiments(experiments, system_prompts, tools,
-                experimenter_model=options["models"]["experimenter"],
-                completion_checker_model=options["models"]["snitch"],
-                max_tokens=9999
-            )
+            models = {}
+            experiments = self.run_experiments(experiments, system_prompts, tools, options)
             self._print(f"[blue]\nExperiment Table:\n{experiments}[/blue]")
             log += f"Iteration {it} Experiment Table:\n{experiments}\n"
             if self.logging_enabled:
@@ -149,8 +146,7 @@ class Iterator:
 
     ### MAIN H-T-E FUNCTONS ###
 
-    def generate_hypothesis(self, system_prompt: str, context: str, model: str,
-                            max_tokens: int = 9999) -> str:
+    def generate_hypothesis(self, system_prompt: str, context: str, model: str) -> str:
         """
         Generates a hypothesis (initial or refined) using the provided system prompt and context.
         WHY: There needs to be an idea to test and evaluate. i.e. standard scientific method.
@@ -160,7 +156,6 @@ class Iterator:
         system_prompt : Prompt defining LLM's role, task, option, etc.
         context : Prior hypotheses, experiments conducted, and evaluations, if any were conducted.
         model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
-        max_tokens : Limit on number of words in response. 1 token ~4/5 of a word => 2kt ~= 1.6kw.
 
         Returns
         -------
@@ -169,12 +164,10 @@ class Iterator:
         messages = [
             {"role": "user", "content": f"[SYSTEM]:\n{system_prompt}/n[USER]:\n{context}"}
         ]
-        response = self.llm_call(model, messages, max_tokens)
+        response = self.llm_call(model, messages)
         return response.choices[0].message.content.strip()
 
-    def run_experiments(self, experiments: str, system_prompts: list, tools,
-                        experimenter_model: str, completion_checker_model: str,
-                        max_tokens: int = 9999) -> str:
+    def run_experiments(self, experiments: str, system_prompts: list, tools, options: dict) -> str:
         """
         Runs experiments until the specified requirements are complete.
         WHY: Having completed experiments allows for the validation / disproving of hypothesis.
@@ -188,9 +181,7 @@ class Iterator:
         experiments : String containing experiments specified by LLM hypothersizer.
         system_prompts : Prompt strings defining LLM's roles, tasks, options, etc.
         tools : Class of tool functions for running experiments, provided alognside their schema.
-        experimenter_model : Name of the model to be used for conducting experiments.
-        completion_checker_model : Name of the model to be used for checking experiment completion.
-        max_tokens : Limit on number of words in response. 1 token ~4/5 of a word => 2kt ~= 1.6kw.
+        options : User prefernces; in this case it's used to access names of specified models.
 
         Returns
         -------
@@ -205,8 +196,7 @@ class Iterator:
                  "content": f"[SYSTEM]:\n{system_prompts[2]}/n[USER]:\n{experiments}"
                  }
             ]
-            response = self.llm_call(experimenter_model, messages, max_tokens,
-                                     functions=tools.TOOL_SCHEMA)
+            response = self.llm_call(options["models"]["experimenter"], messages, functions=tools.TOOL_SCHEMA)
             message = response.choices[0].message
 
             # If the LLM wants to call a function, extract relevant details and run it.
@@ -243,7 +233,7 @@ class Iterator:
                         "name": function_name,
                         "content": result_df.to_json()
                     })
-                    response2 = self.llm_call(experimenter_model, messages, max_tokens,
+                    response2 = self.llm_call(options["models"]["experimenter"], messages,
                                               functions=tools.TOOL_SCHEMA)
                     experiments = response2.choices[0].message.content
 
@@ -255,7 +245,7 @@ class Iterator:
                      "content": f"[SYSTEM]:\n{system_prompts[3]}/n[USER]:\n{experiments}"
                      }
                 ]
-                response3 = self.llm_call(completion_checker_model, messages2, max_tokens)
+                response3 = self.llm_call(options["models"]["snitch"], messages2)
                 checker_reply = response3.choices[0].message.content.upper()
                 if "COMPLETE" in checker_reply:
                     break
@@ -270,7 +260,7 @@ class Iterator:
         return experiments
 
     def evaluate_hypothesis(self, system_prompt: str, experiments: str, hypothesis_text: str,
-                            model: str, max_tokens: int = 9999) -> json:
+                            model: str) -> json:
         """
         Evaluates the hypothesis by sending the hypothesis text and the complete experiment table
         to the LLM evaluator.
@@ -282,7 +272,6 @@ class Iterator:
         experiments : String containing completed experiments.
         hypothesis_text : String containing original hypothesis to be evaluated by LLM here.
         model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
-        max_tokens : Limit on number of words in response. 1 token ~4/5 of a word => 2kt ~= 1.6kw.
 
         Returns
         -------
@@ -292,7 +281,7 @@ class Iterator:
         messages = [
             {"role": "user", "content": f"[SYSTEM]:\n{system_prompt}/n[USER]:\n{user_message}"}
         ]
-        response = self.llm_call(model, messages, max_tokens)
+        response = self.llm_call(model, messages)
         return response.choices[0].message.content.strip()
 
 
@@ -336,14 +325,14 @@ class Iterator:
         try:
             with open(log_filename, "w", encoding="utf-8") as f:
                 f.write(log)
-        except Exception as e:
+        except IOError as e:
             error_message = f"[red]Failed to save log: {e}[/red]"
             if self.print_enabled:
                 self._print(error_message)
 
 
-    def llm_call(self, model: str, messages: list, max_tokens: int = 9999,
-                 functions = None, use_json: bool = False) -> json:
+    def llm_call(self, model: str, messages: list, functions = None,
+                 use_json: bool = False) -> json:
         """
         Calls the OpenAI ChatCompletion API with the given messages.
         WHY: Using OpenAI's models avoids us having to build an LLM from scratch. i.e. Cost savings.
@@ -352,7 +341,6 @@ class Iterator:
         ----------
         model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
         messages : List of "prior messages from chat", as well as prompt for LLM to respond to.
-        max_tokens : Limit on number of words in response. 1 token ~4/5 of a word => 2kt ~= 1.6kw.
         functions : Details of functions available to the LLM such that it can perform expeirments.
         use_json : Indicator of whether LLMs should produce their outputs strictly in JSON or not.
 
@@ -373,7 +361,6 @@ class Iterator:
                 response_format=response_format,
                 model=model,
                 messages=messages,
-                max_completion_tokens=max_tokens,
                 functions=functions)
                 return response
             except oai.OpenAIError as e:
@@ -386,8 +373,7 @@ class Iterator:
                 response = self.client.chat.completions.create(
                 response_format=response_format,
                 model=model,
-                messages=messages,
-                max_completion_tokens=max_tokens)
+                messages=messages)
                 return response
             except oai.OpenAIError as e:
                 error_message = f"[red]OpenAI error: {e}[/red]"
@@ -437,11 +423,11 @@ class Iterator:
         try:
             # Extract hypothesis and experiment data as separate JSONs.
             llm_output = self.llm_call(model="gpt-4o",
-                                       messages=messages, max_tokens=9999, use_json=True)
+                                       messages=messages, use_json=True)
             parsed_output = json.loads(llm_output.choices[0].message.content.strip())
             hypothesis_text = parsed_output.get("hypothesis_text", "").strip()
             experiment_data = parsed_output.get("experiment_data", "").strip()
             return hypothesis_text, experiment_data
 
-        except Exception as e:
-            raise Exception(f"LLM-based parsing failed: {e}")
+        except oai.OpenAIError as e:
+            raise Exception(f"LLM-based parsing failed: {e}") from e
