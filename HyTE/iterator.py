@@ -24,7 +24,7 @@ class Iterator:
         self.logging_folder = "logs"
         self.timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    def run(self, system_prompts: list, options: dict, key: str, tools, sample_data: any) -> list:
+    def run(self, system_prompts: list, options: dict, tools, sample_data: any) -> list:
         """
         Orchestrates the hypothesize–test–evaluate workflow.
         WHY: Provides a simple, single-function iterface so non-software engineers can still use it.
@@ -47,8 +47,12 @@ class Iterator:
         self.print_enabled = options.get("print-process", True)
         self.logging_enabled = options["logging"].get("log", True)
         self.logging_folder = options["logging"].get("folder", True)
-        if self.logging_enabled: self.timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.client = OpenAI(api_key=key or (rprint("[red]OpenAI key load error.[/red]") or None))
+        if self.logging_enabled:
+            self.timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+        if options["key"]:
+            self.client = OpenAI(api_key=options["key"])
+        else:
+            rprint("[red]OpenAI key load error.[/red]")
 
         # Initialise history as empty.
         # WHY: These will be used to pass context to subsquent iterations but no history exists yet.
@@ -57,18 +61,20 @@ class Iterator:
         for it in range(1, iterations + 1):
             self._print(f"\n[bold cyan]--- Iteration {it} ---[/bold cyan]")
             log += f"\n--- Iteration {it} ---\n"
-            if self.logging_enabled: self._save_log(log)
+            if self.logging_enabled:
+                self._save_log(log)
 
             # For the first iteration, load initial data and include it in the context.
             # WHY: On the first iteration, I sometimes want to provide actual data for more context.
             if it == 1:
                 try:
                     if sample_data:
-                        context = "Data: " + sample_data.to_dict().__str__()
+                        context = "Data: " + str(sample_data.to_dict())
 
                 except Exception as e:
                     error_message = f"[red]Failed to load initial data: {e}[/red]"
-                    if self.print_enabled: self._print(error_message)
+                    if self.print_enabled:
+                        self._print(error_message)
                     raise
             else:
                 # In subsequent iterations, pass the previous experiment table and evaluation.
@@ -87,13 +93,15 @@ class Iterator:
             )
             self._print(f"[cyan]Hypothesis Response:\n{hypothesis_response}[/cyan]")
             log += f"Iteration {it} Hypothesis Response:\n{hypothesis_response}\n"
-            if self.logging_enabled: self._save_log(log)
+            if self.logging_enabled:
+                self._save_log(log)
 
             # Split the hypothesis response into the hypothesis (+details) and the experiment table.
             # WHY: Makes it simpler for dumber LLMs to process experiment data. Also, cleaner logs.
             hypothesis_text, experiments = self.split_hypothesis_response(hypothesis_response)
             log += f"\nIteration {it} Extracted Experiment Table:\n{experiments}\n"
-            if self.logging_enabled: self._save_log(log)
+            if self.logging_enabled:
+                self._save_log(log)
 
 
             ## EXPERIMENT.
@@ -107,7 +115,8 @@ class Iterator:
             )
             self._print(f"[blue]\nExperiment Table:\n{experiments}[/blue]")
             log += f"Iteration {it} Experiment Table:\n{experiments}\n"
-            if self.logging_enabled: self._save_log(log)
+            if self.logging_enabled:
+                self._save_log(log)
 
 
             ## EVALUATE.
@@ -119,7 +128,8 @@ class Iterator:
                                                  )
             self._print(f"[magenta]\nEvaluation:\n{evaluation}[/magenta]")
             log += f"Iteration {it} Evaluation:\n{evaluation}\n"
-            if self.logging_enabled: self._save_log(log)
+            if self.logging_enabled:
+                self._save_log(log)
 
 
             # COMPILE ITERATION.
@@ -207,7 +217,8 @@ class Iterator:
                     arguments = json.loads(message.function_call.arguments)
                 except Exception as e:
                     error_message = f"[red]Error parsing function arguments: {e}[/red]"
-                    if self.print_enabled: self._print(error_message)
+                    if self.print_enabled:
+                        self._print(error_message)
                     break
 
                 # FUTURE ERYK: MAKE THIS SHIT LESS SHIT PELASE OH MY GOD. @5krus
@@ -253,7 +264,8 @@ class Iterator:
 
         # Increment attempts to avoid infinite loops if LLMs fail.
         attempts += 1
-        if self.print_enabled and attempts > 1: self._print(f"Current attempt: {attempts}")
+        if self.print_enabled and attempts > 1:
+            self._print(f"Current attempt: {attempts}")
         return experiments
 
     def evaluate_hypothesis(self, system_prompt: str, experiments: str, hypothesis_text: str,
@@ -324,11 +336,12 @@ class Iterator:
                 f.write(log)
         except Exception as e:
             error_message = f"[red]Failed to save log: {e}[/red]"
-            if self.print_enabled: self._print(error_message)
+            if self.print_enabled:
+                self._print(error_message)
 
 
     def llm_call(self, model: str, messages: list, max_tokens: int = 9999,
-                 functions = None, use_JSON: bool = False) -> json:
+                 functions = None, use_json: bool = False) -> json:
         """
         Calls the OpenAI ChatCompletion API with the given messages.
         WHY: Using OpenAI's models avoids us having to build an LLM from scratch. i.e. Cost savings.
@@ -346,11 +359,10 @@ class Iterator:
         """
 
         # Prepare type to avoid JSON issues.
-        if use_JSON:
-            type = "json_object"
+        if use_json:
+            response_format = {"type": "json_object"}
         else:
-            type = "text"
-        response_format = {"type": type} # This is fucking idiotic kill me
+            response_format = {"type": "text"}
 
         if functions:
             try:
@@ -363,7 +375,8 @@ class Iterator:
                 return response
             except Exception as e:
                 error_message = f"[red]LLM call failed: {e}[/red]"
-                if self.print_enabled: self._print(error_message)
+                if self.print_enabled:
+                    self._print(error_message)
                 raise
         else:
             try:
@@ -375,7 +388,8 @@ class Iterator:
                 return response
             except Exception as e:
                 error_message = f"[red]LLM call failed: {e}[/red]"
-                if self.print_enabled: self._print(error_message)
+                if self.print_enabled:
+                    self._print(error_message)
                 raise
 
     def split_hypothesis_response(self, response_text: str):
@@ -420,7 +434,7 @@ class Iterator:
         try:
             # Extract hypothesis and experiment data as separate JSONs.
             llm_output = self.llm_call(model="gpt-4o",
-                                       messages=messages, max_tokens=9999, use_JSON=True)
+                                       messages=messages, max_tokens=9999, use_json=True)
             parsed_output = json.loads(llm_output.choices[0].message.content.strip())
             hypothesis_text = parsed_output.get("hypothesis_text", "").strip()
             experiment_data = parsed_output.get("experiment_data", "").strip()

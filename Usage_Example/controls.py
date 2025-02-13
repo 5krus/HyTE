@@ -14,6 +14,7 @@ KEY = os.getenv("OPENAI_API_KEY")
 # Define properties of models and iterator.
 # WHY: Costs, intelligence, and timings need to be controllable to avoid going overboard.
 OPTIONS = {
+    "key": KEY,
     "iterations": 10,
     "print-process": True,
     "logging": {
