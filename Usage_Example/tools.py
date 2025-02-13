@@ -5,7 +5,7 @@ This script shows how function-based tools can be made accessible to LLMs.
 """
 
 # Prepare imports.
-import warnings                                           
+import warnings
 import pandas as pd                                        # pylint: disable=import-error.
 import RapidUseML as RuM                                   # pylint: disable=import-error.
 from sklearn.exceptions import InconsistentVersionWarning  # pylint: disable=import-error.

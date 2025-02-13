@@ -7,7 +7,7 @@ The Iterator module defines classes necessary for running Hypothesize-Test-Evalu
 import os                          # Allows for accessing local system (e.g. to save logs).
 import json                        # Allows for simple handling of tool schemas for LLM use.
 import datetime                    # Allows for making timestamps used for live run logging.
-from openai import OpenAI          # Allows for OpenAI model access with keys via their API.
+import openai as oai               # Allows for OpenAI model access with keys via their API.
 from rich import print as rprint   # Allows for custom (colourful) text printing in terminal.
 
 class Iterator:
@@ -33,7 +33,6 @@ class Iterator:
         ----------
         system_prompts : Prompt strings defining LLM's roles, tasks, options, etc.
         options : Current run settings like iteration count, model names, logging preferences, etc.
-        key : OpenAI API key such that LLMs can be accessed.
         tools : The tools available to the LLMs for testing hypotheses via experiments.
         sample_data : (OPTIONAL) Data to provide the model with as an example of what to expect.
 
@@ -50,7 +49,7 @@ class Iterator:
         if self.logging_enabled:
             self.timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
         if options["key"]:
-            self.client = OpenAI(api_key=options["key"])
+            self.client = oai.OpenAI(api_key=options["key"])
         else:
             rprint("[red]OpenAI key load error.[/red]")
 
@@ -215,7 +214,7 @@ class Iterator:
                 function_name = message.function_call.name
                 try:
                     arguments = json.loads(message.function_call.arguments)
-                except Exception as e:
+                except json.JSONDecodeError as e:
                     error_message = f"[red]Error parsing function arguments: {e}[/red]"
                     if self.print_enabled:
                         self._print(error_message)
@@ -225,7 +224,7 @@ class Iterator:
                 if function_name == "evaluate_design":
                     try:
                         arguments = json.loads(message.function_call.arguments)
-                    except Exception as e:
+                    except json.JSONDecodeError as e:
                         self._print(f"[red]Error parsing function arguments: {e}[/red]")
                         break
 
@@ -247,7 +246,9 @@ class Iterator:
                     response2 = self.llm_call(experimenter_model, messages, max_tokens,
                                               functions=tools.TOOL_SCHEMA)
                     experiments = response2.choices[0].message.content
+
             else:
+
                 # No function call in the response: check if experiments are complete.
                 messages2 = [
                     {"role": "user",
@@ -258,9 +259,9 @@ class Iterator:
                 checker_reply = response3.choices[0].message.content.upper()
                 if "COMPLETE" in checker_reply:
                     break
-                else:
-                    # Update the experiment table with the model's new output.
-                    experiments = response3.choices[0].message.content
+
+                # Update the experiment table with the model's new output.
+                experiments = response3.choices[0].message.content
 
         # Increment attempts to avoid infinite loops if LLMs fail.
         attempts += 1
@@ -326,7 +327,8 @@ class Iterator:
         -------
         None
         """
-        if not os.path.exists(self.logging_folder): os.makedirs(self.logging_folder)
+        if not os.path.exists(self.logging_folder):
+            os.makedirs(self.logging_folder)
         log_filename = os.path.join(self.logging_folder, f"run_{self.timestamp}.txt")
 
         # Updates contents of log file, named with timestamp created at run start.
@@ -352,6 +354,7 @@ class Iterator:
         messages : List of "prior messages from chat", as well as prompt for LLM to respond to.
         max_tokens : Limit on number of words in response. 1 token ~4/5 of a word => 2kt ~= 1.6kw.
         functions : Details of functions available to the LLM such that it can perform expeirments.
+        use_json : Indicator of whether LLMs should produce their outputs strictly in JSON or not.
 
         Returns
         -------
@@ -373,8 +376,8 @@ class Iterator:
                 max_completion_tokens=max_tokens,
                 functions=functions)
                 return response
-            except Exception as e:
-                error_message = f"[red]LLM call failed: {e}[/red]"
+            except oai.OpenAIError as e:
+                error_message = f"[red]OpenAI error: {e}[/red]"
                 if self.print_enabled:
                     self._print(error_message)
                 raise
@@ -386,8 +389,8 @@ class Iterator:
                 messages=messages,
                 max_completion_tokens=max_tokens)
                 return response
-            except Exception as e:
-                error_message = f"[red]LLM call failed: {e}[/red]"
+            except oai.OpenAIError as e:
+                error_message = f"[red]OpenAI error: {e}[/red]"
                 if self.print_enabled:
                     self._print(error_message)
                 raise
