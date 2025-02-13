@@ -12,6 +12,5 @@ import controls                      # Prompts, tools, keys, and other consumabl
 # Run the iterator.
 [summary, full_log] = Iterator().run(controls.SYSTEM_PROMPTS, # pylint: disable=not-callable.
                                      controls.OPTIONS,
-                                     controls.KEY,
                                      tools.Tools(),
                                      sample_data = None)
