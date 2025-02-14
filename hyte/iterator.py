@@ -49,64 +49,41 @@ class Iterator:
 
         # Initialise history as empty.
         # WHY: These will be used to pass context to subsquent iterations but no history exists yet.
-        context, log, previous_feedback = "", "", ""
+        context, previous_feedback = "", ""
 
         for it in range(1, self.config["iterations"] + 1):
-            self._print(f"\n[bold cyan]--- Iteration {it} ---[/bold cyan]")
-            log += f"\n--- Iteration {it} ---\n"
-            if self.config["logging_flag"]:
-                self._save_log(log)
+            self._print_log(f"\n[bold cyan]- Iteration {it} -[/bold cyan]")
 
             # Updates the context with the provided data or previous feedback from prior iterations.
             # WHY: Giving LLMs background info. to work with, hopefully helping them think better.
             context = self._update_context(context, previous_feedback, sample_data)
 
-
             ## HYPOTHESIZE.
 
             # Generate a (new or refined) hypothesis.
             # WHY: There needs to be an idea to test and evaluate. i.e. standard scientific method.
-            hypothesis_response = self.generate_hypothesis(
-                system_prompt=system_prompts[0],
-                context=context,
-                model=self.options["models"]["hypothesizer"]
-            )
-            self._print(f"[cyan]Hypothesis Response:\n{hypothesis_response}[/cyan]")
-            log += f"Iteration {it} Hypothesis Response:\n{hypothesis_response}\n"
-            if self.config["logging_flag"]:
-                self._save_log(log)
+            hypothesis_response = self.generate_hypothesis(system_prompts[0], context,
+                                                           self.options["models"]["hypothesizer"])
+            self._print_log(f"[cyan]Hypothesis Response:\n{hypothesis_response}\n[/cyan]")
 
             # Split the hypothesis response into the hypothesis (+details) and the experiment table.
             # WHY: Makes it simpler for dumber LLMs to process experiment data. Also, cleaner logs.
             hypothesis_text, experiments = self.split_hypothesis_response(hypothesis_response)
-            log += f"\nIteration {it} Extracted Experiment Table:\n{experiments}\n"
-            if self.config["logging_flag"]:
-                self._save_log(log)
-
 
             ## EXPERIMENT.
 
             # Run experiments until the experiment table is complete.
             # WHY: Ensures all experiments desired by the hypothesizer are done before progessing.
             experiments = self.run_experiments(experiments, system_prompts, tools)
-            self._print(f"[blue]\nExperiment Table:\n{experiments}[/blue]")
-            log += f"Iteration {it} Experiment Table:\n{experiments}\n"
-            if self.config["logging_flag"]:
-                self._save_log(log)
-
+            self._print_log(f"[blue]\nExperiment Table:\n{experiments}\n[/blue]")
 
             ## EVALUATE.
 
             # Evaluate the hypothesis.
             # WHY: This allows for self-correction by checking whether the hypothesis was correct.
             evaluation = self.evaluate_hypothesis(system_prompts[1], experiments, hypothesis_text,
-                                                  model=self.options["models"]["evaluator"]
-                                                 )
-            self._print(f"[magenta]\nEvaluation:\n{evaluation}[/magenta]")
-            log += f"Iteration {it} Evaluation:\n{evaluation}\n"
-            if self.config["logging_flag"]:
-                self._save_log(log)
-
+                                                  model=self.options["models"]["evaluator"])
+            self._print_log(f"[magenta]\nEvaluation:\n{evaluation}\n[/magenta]")
 
             # COMPILE ITERATION.
 
@@ -120,8 +97,8 @@ class Iterator:
 
         # Return logs and summaries for user to play with.
         # WHY: While only local saves could work, having these as a response makes recursion easier.
-        self.full_log, summary = log, "\n".join(self.iteration_summaries)
-        return [summary, log]
+        summary = "\n".join(self.iteration_summaries)
+        return [summary, self.full_log] # TO-DO: Make this give an LLM-based summary. Gemimi 2.0??
 
 
     ### MAIN H-T-E FUNCTONS ###
@@ -170,45 +147,24 @@ class Iterator:
         while attempts < 5:
 
             # Call Experiment Runner with previously specified experiments.
-            messages = [{
-                "role": "user",
-                "content": f"[SYSTEM]:\n{system_prompts[2]}/n[USER]:\n{experiments}"
-                }]
+            messages = [{"role": "user",
+                         "content": f"[SYSTEM]:\n{system_prompts[2]}/n[USER]:\n{experiments}"}]
             message = self.llm_call(self.options["models"]["experimenter"], messages,
-                                     functions=tools.TOOL_SCHEMA).choices[0].message
+                                     tools.TOOL_SCHEMA).choices[0].message
 
             # If the LLM wants to call a function, extract relevant details and run it.
             if message.function_call:
-                try:
-                    arguments = json.loads(message.function_call.arguments)
-                except json.JSONDecodeError as e:
-                    error_message = f"[red]Error parsing function arguments: {e}[/red]"
-                    if self.config["printing_flag"]:
-                        self._print(error_message)
-                    break
-
-                # FUTURE ERYK: MAKE THIS SHIT LESS SHIT PELASE OH MY GOD. @5krus
                 if message.function_call.name == "evaluate_design":
-                    try:
-                        arguments = json.loads(message.function_call.arguments)
-                    except json.JSONDecodeError as e:
-                        self._print(f"[red]Error parsing function arguments: {e}[/red]")
-                        break
 
                     # Execute the tool function.
-                    result_df = tools.evaluate_design(arguments.get("experiments"))
+                    func_arguments = json.loads(message.function_call.arguments)
+                    result_df = tools.evaluate_design(func_arguments.get("experiments"))
 
-                    # Send the function result back to the model.
-                    messages.append({
-                        "role": "assistant",
-                        "content": None,
-                        "function_call": message.function_call
-                    })
-                    messages.append({
-                        "role": "function",
-                        "name": message.function_call.name,
-                        "content": result_df.to_json()
-                    })
+                    # Send the function result back to the model. Note: May be unnecessary.
+                    messages.append({"role": "assistant", "content": None,
+                                     "function_call": message.function_call})
+                    messages.append({"role": "function", "name": message.function_call.name,
+                                     "content": result_df.to_json()})
                     response2 = self.llm_call(self.options["models"]["experimenter"], messages,
                                               functions=tools.TOOL_SCHEMA)
                     experiments = response2.choices[0].message.content
@@ -216,11 +172,8 @@ class Iterator:
             else:
 
                 # No function call in the response: check if experiments are complete.
-                messages2 = [
-                    {"role": "user",
-                     "content": f"[SYSTEM]:\n{system_prompts[3]}/n[USER]:\n{experiments}"
-                     }
-                ]
+                messages2 = [{"role": "user",
+                              "content": f"[SYSTEM]:\n{system_prompts[3]}/n[USER]:\n{experiments}"}]
                 response3 = self.llm_call(self.options["models"]["snitch"], messages2)
                 checker_reply = response3.choices[0].message.content.upper()
                 if "COMPLETE" in checker_reply:
@@ -231,8 +184,8 @@ class Iterator:
 
         # Increment attempts to avoid infinite loops if LLMs fail.
         attempts += 1
-        if self.config["printing_flag"] and attempts > 1:
-            self._print(f"Current attempt: {attempts}")
+        if attempts > 1:
+            self._print_log(f"Current attempt: {attempts}")
         return experiments
 
     def evaluate_hypothesis(self, system_prompt: str, experiments: str, hypothesis_text: str,
@@ -254,59 +207,44 @@ class Iterator:
         response : Evaluation of hypothesis correctness based on experimental results.
         """
         user_message = f"Hypothesis:\n{hypothesis_text}\n\nExperiment Results:\n{experiments}"
-        messages = [
-            {"role": "user", "content": f"[SYSTEM]:\n{system_prompt}/n[USER]:\n{user_message}"}
-        ]
+        messages = [{"role": "user",
+                     "content": f"[SYSTEM]:\n{system_prompt}/n[USER]:\n{user_message}"}]
         response = self.llm_call(model, messages)
         return response.choices[0].message.content.strip()
 
 
     ### SUPPORT FUNCTIONS ###
 
-    def _print(self, message: str) -> None:
+    def _print_log(self, text: str) -> None:
         """
-        Prints to terminal only if printing is enabled.
-        WHY: To avoid spamming terminal if the user prefers it to be clean.
+        Prints to terminal printing is enabled. Logs to log folder if logging is enabled.
+        WHY: To keep track of LLM's progress while maintaining cleanliness and optionality.
 
         Parameters
         ----------
-        message : Text to be printed if printing is enabled.
+        text : Text that is to be added to the log file and/or printed in terminal.
 
         Returns
         -------
         None
         """
+
+        # Printing.
         if self.config["printing_flag"]:
-            rprint(message)
+            rprint(text)
 
-    def _save_log(self, log: str) -> None:
-        """
-        Saves timestampted log to a file within 'logs' folder. Creates folder if it doesn't exist.
-        WHY: Allows for the ability to revisit past runs, if the user wants to save them.
-
-        Parameters
-        ----------
-        log : Iteration log (progress of run) to be saved.
-
-        Returns
-        -------
-        None
-        """
+        # Creating logging folder if it doesn't exist.
+        # WHY: Avoids errors that would occur if folder didn't exist.
         if not os.path.exists(self.config["logging_folder"]):
             os.makedirs(self.config["logging_folder"])
-        log_filename = os.path.join(self.config["logging_folder"],
-                                    f"run_{self.config['timestamp']}.txt")
 
         # Updates contents of log file, named with timestamp created at run start.
         # WHY: Files are timestamped to avoid overwriting existing logs.
-        try:
-            with open(log_filename, "w", encoding="utf-8") as f:
-                f.write(log)
-        except IOError as e:
-            error_message = f"[red]Failed to save log: {e}[/red]"
-            if self.config["printing_flag"]:
-                self._print(error_message)
-
+        log_filename = os.path.join(self.config["logging_folder"],
+                                    f"run_{self.config['timestamp']}.txt")
+        with open(log_filename, "w", encoding="utf-8") as f:
+            self.full_log += text + "\n"
+            f.write(self.full_log)
 
     def _initialise_iterator(self) -> None:
         """
@@ -342,7 +280,7 @@ class Iterator:
         if sample_data:
             context = "Data: " + str(sample_data.to_dict())
         else:
-            context += "Previous iteration evaluation:\n" + previous_feedback # TO-DO: Number these.
+            context += "Previous iteration evaluation:\n" + previous_feedback
 
         return context
 
@@ -364,38 +302,24 @@ class Iterator:
         -------
         response : LLM's reponse. This depends on context and your request.
         """
-
-        # Prepare type to avoid JSON issues.
         if use_json:
             response_format = {"type": "json_object"}
         else:
             response_format = {"type": "text"}
 
         if functions:
-            try:
-                response = self.client.chat.completions.create(
-                response_format=response_format,
-                model=model,
-                messages=messages,
-                functions=functions)
-                return response
-            except oai.OpenAIError as e:
-                error_message = f"[red]OpenAI error: {e}[/red]"
-                if self.config["printing_flag"]:
-                    self._print(error_message)
-                raise
+            response = self.client.chat.completions.create(
+            response_format=response_format,
+            model=model,
+            messages=messages,
+            functions=functions)
         else:
-            try:
-                response = self.client.chat.completions.create(
-                response_format=response_format,
-                model=model,
-                messages=messages)
-                return response
-            except oai.OpenAIError as e:
-                error_message = f"[red]OpenAI error: {e}[/red]"
-                if self.config["printing_flag"]:
-                    self._print(error_message)
-                raise
+            response = self.client.chat.completions.create(
+            response_format=response_format,
+            model=model,
+            messages=messages)
+
+        return response
 
     def split_hypothesis_response(self, response_text: str) -> list:
         """
@@ -429,24 +353,15 @@ class Iterator:
 
         # Prepare the user prompt with the response text.
         user_prompt = f"Input text:\n{response_text}"
-        messages = [
-            {"role": "user", "content": f"[SYSTEM]:\n{system_prompt}/n[USER]:\n{user_prompt}"}
-        ]
+        messages = [{"role": "user",
+                     "content": f"[SYSTEM]:\n{system_prompt}/n[USER]:\n{user_prompt}"}]
 
         # Call LLM to split hypothesis and experiment texts.
         # WHY: This allows for a "general" solution, as opposed to coding tool-specific separations.
         # Note: Model is hard-coded to "gpt-4o" because 99% chance nobody will want to change this.
-        try:
-            # Extract hypothesis and experiment data as separate JSONs.
-            llm_output = self.llm_call(model="gpt-4o", messages=messages, use_json=True)
-            parsed_output = json.loads(llm_output.choices[0].message.content.strip())
-            hypothesis_text = parsed_output.get("hypothesis_text", "").strip()
-            experiment_data = parsed_output.get("experiment_data", "").strip()
-
-        except oai.OpenAIError as e:
-            error_message = f"[red]LLM-based parsing failed: {e}[/red]"
-            if self.config["printing_flag"]:
-                self._print(error_message)
-            raise
+        llm_output = self.llm_call(model="gpt-4o", messages=messages, use_json=True)
+        parsed_output = json.loads(llm_output.choices[0].message.content.strip())
+        hypothesis_text = parsed_output.get("hypothesis_text", "").strip()
+        experiment_data = parsed_output.get("experiment_data", "").strip()
 
         return [hypothesis_text, experiment_data]
