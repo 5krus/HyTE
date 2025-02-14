@@ -114,9 +114,9 @@ class Iterator:
         context : Prior hypotheses, experiments conducted, and evaluations, if any were conducted.
         model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
 
-        Returns
-        -------
-        response : LLM's reponse. i.e. It's hypothesis, reasoning, desired experiments, etc.
+Returns
+-------
+response : LLM's reponse. i.e. It's hypothesis, reasoning, desired experiments, etc.
         """
         messages = [
             {"role": "user", "content": f"[SYSTEM]:\n{system_prompt}/n[USER]:\n{context}"}
@@ -126,22 +126,22 @@ class Iterator:
 
     def run_experiments(self, experiments: str, system_prompts: list, tools) -> str:
         """
-        Runs experiments until the specified requirements are complete.
-        WHY: Having completed experiments allows for the validation / disproving of hypothesis.
+Runs experiments until the specified requirements are complete.
+WHY: Having completed experiments allows for the validation / disproving of hypothesis.
 
-        Note:
-        - system_prompts[1] used as the Experiment Runner prompt, with functions enabled.
-        - system_prompts[4] used as the Experiment Completion Checker prompt, with no functons.
+Note:
+- system_prompts[1] used as the Experiment Runner prompt, with functions enabled.
+- system_prompts[4] used as the Experiment Completion Checker prompt, with no functons.
 
-        Parameters
-        ----------
-        experiments : String containing experiments specified by LLM hypothersizer.
-        system_prompts : Prompt strings defining LLM's roles, tasks, options, etc.
-        tools : Class of tool functions for running experiments, provided alognside their schema.
+Parameters
+----------
+experiments : String containing experiments specified by LLM hypothersizer.
+system_prompts : Prompt strings defining LLM's roles, tasks, options, etc.
+tools : Class of tool functions for running experiments, provided alognside their schema.
 
-        Returns
-        -------
-        experiments : Completed experiments.
+Returns
+-------
+experiments : Completed experiments.
         """
         attempts = 0
         while attempts < 5:
@@ -150,7 +150,7 @@ class Iterator:
             messages = [{"role": "user",
                          "content": f"[SYSTEM]:\n{system_prompts[2]}/n[USER]:\n{experiments}"}]
             message = self.llm_call(self.options["models"]["experimenter"], messages,
-                                     tools.TOOL_SCHEMA).choices[0].message
+                                    tools.TOOL_SCHEMA).choices[0].message
 
             # If the LLM wants to call a function, extract relevant details and run it.
             if message.function_call:
@@ -191,20 +191,20 @@ class Iterator:
     def evaluate_hypothesis(self, system_prompt: str, experiments: str, hypothesis_text: str,
                             model: str) -> json:
         """
-        Evaluates the hypothesis by sending the hypothesis text and the complete experiment table
-        to the LLM evaluator.
-        WHY: To know whether the hypothesis was right, it needs to be checked against expeirments.
+Evaluates the hypothesis by sending the hypothesis text and the complete experiment table
+to the LLM evaluator.
+WHY: To know whether the hypothesis was right, it needs to be checked against expeirments.
 
-        Parameters
-        ----------
-        system_prompt : Prompt defining LLM's role, task, option, etc.
-        experiments : String containing completed experiments.
-        hypothesis_text : String containing original hypothesis to be evaluated by LLM here.
-        model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
+Parameters
+----------
+system_prompt : Prompt defining LLM's role, task, option, etc.
+experiments : String containing completed experiments.
+hypothesis_text : String containing original hypothesis to be evaluated by LLM here.
+model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
 
-        Returns
-        -------
-        response : Evaluation of hypothesis correctness based on experimental results.
+Returns
+-------
+response : Evaluation of hypothesis correctness based on experimental results.
         """
         user_message = f"Hypothesis:\n{hypothesis_text}\n\nExperiment Results:\n{experiments}"
         messages = [{"role": "user",
@@ -217,17 +217,17 @@ class Iterator:
 
     def _print_log(self, text: str) -> None:
         """
-        Prints to terminal printing is enabled. Logs to log folder if logging is enabled.
-        WHY: To keep track of LLM's progress while maintaining cleanliness and optionality.
+Prints to terminal printing is enabled. Logs to log folder if logging is enabled.
+WHY: To keep track of LLM's progress while maintaining cleanliness and optionality.
 
-        Parameters
-        ----------
-        text : Text that is to be added to the log file and/or printed in terminal.
+Parameters
+----------
+text : Text that is to be added to the log file and/or printed in terminal.
 
-        Returns
-        -------
-        None
-        """
+Returns
+-------
+None
+"""
 
         # Printing.
         if self.config["printing_flag"]:
@@ -248,12 +248,12 @@ class Iterator:
 
     def _initialise_iterator(self) -> None:
         """
-        Initialises the iterator with the provided options.
-        WHY: To avoid having to pass options to every function.
+Initialises the iterator with the provided options.
+WHY: To avoid having to pass options to every function.
 
-        Returns
-        -------
-        None
+Returns
+-------
+None
         """
         if self.config["logging_flag"]:
             self.config["timestamp"] = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -261,19 +261,19 @@ class Iterator:
     @staticmethod
     def _update_context(context: str, previous_feedback: str, sample_data = None) -> str:
         """
-        Updates the context with the provided data or previous feedback from prior iterations.
-        WHY: So the LLMs have some background info. to work with; hopefully helping them think.
+Updates the context with the provided data or previous feedback from prior iterations.
+WHY: So the LLMs have some background info. to work with; hopefully helping them think.
 
-        Parameters
-        ----------
-        context : Information provided to LLMs tracking insights, thoughts, experiments, etc.
-        previous_feedback : Hypothesis, experiments and feedback from prior iteration.
-        sample_data : (OPTIONAL) A small amount of data to inspire the LLMs hypothesis a little.
+Parameters
+----------
+context : Information provided to LLMs tracking insights, thoughts, experiments, etc.
+previous_feedback : Hypothesis, experiments and feedback from prior iteration.
+sample_data : (OPTIONAL) A small amount of data to inspire the LLMs hypothesis a little.
 
-        Returns
-        -------
-        context : Information provided to LLMs tracking insights, thoughts, experiments, etc.
-        """
+Returns
+-------
+context : Information provided to LLMs tracking insights, thoughts, experiments, etc.
+"""
 
         # In subsequent iterations, pass the previous, hypothesis, experiments and evaluation.
         # WHY: This contributes to self-correction / discovery based on prior tested ideas.
@@ -288,19 +288,19 @@ class Iterator:
     def llm_call(self, model: str, messages: list, functions = None,
                  use_json: bool = False) -> json:
         """
-        Calls the OpenAI ChatCompletion API with the given messages.
-        WHY: Using OpenAI's models avoids us having to build an LLM from scratch. i.e. Cost savings.
+Calls the OpenAI ChatCompletion API with the given messages.
+WHY: Using OpenAI's models avoids us having to build an LLM from scratch. i.e. Cost savings.
 
-        Parameters
-        ----------
-        model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
-        messages : List of "prior messages from chat", as well as prompt for LLM to respond to.
-        functions : Details of functions available to the LLM such that it can perform expeirments.
-        use_json : Indicator of whether LLMs should produce their outputs strictly in JSON or not.
+Parameters
+----------
+model : The name of the model to make the query with. i.e. "4o", "o1", "o3-mini-high", etc.
+messages : List of "prior messages from chat", as well as prompt for LLM to respond to.
+functions : Details of functions available to the LLM such that it can perform expeirments.
+use_json : Indicator of whether LLMs should produce their outputs strictly in JSON or not.
 
-        Returns
-        -------
-        response : LLM's reponse. This depends on context and your request.
+Returns
+-------
+response : LLM's reponse. This depends on context and your request.
         """
         if use_json:
             response_format = {"type": "json_object"}
@@ -309,46 +309,46 @@ class Iterator:
 
         if functions:
             response = self.client.chat.completions.create(
-            response_format=response_format,
-            model=model,
-            messages=messages,
-            functions=functions)
+                response_format=response_format,
+                model=model,
+                messages=messages,
+                functions=functions)
         else:
             response = self.client.chat.completions.create(
-            response_format=response_format,
-            model=model,
-            messages=messages)
+                response_format=response_format,
+                model=model,
+                messages=messages)
 
         return response
 
     def split_hypothesis_response(self, response_text: str) -> list:
         """
-        Uses an LLM call to robustly parse the hypothesis response into two parts:
-        - hypothesis_text: the textual description of the hypothesis and reasoning.
-        - experiment_table: the block of text containing experiment definitions.
-        WHY: Using an LLM for this instead of RegEx allows for generalisation.
+Uses an LLM call to robustly parse the hypothesis response into two parts:
+- hypothesis_text: the textual description of the hypothesis and reasoning.
+- experiment_table: the block of text containing experiment definitions.
+WHY: Using an LLM for this instead of RegEx allows for generalisation.
 
-        Parameters
-        ----------
-        response_text : String from LLM containing hypothesis text and desired experiments list.
+Parameters
+----------
+response_text : String from LLM containing hypothesis text and desired experiments list.
 
-        Returns
-        -------
-        [hypothesis_text, experiment_table] : String containing only written hypothesis, and string
-                                              containing only experiment data.
+Returns
+-------
+[hypothesis_text, experiment_table] : String containing only written hypothesis, and string
+containing only experiment data.
         """
         # Define a system prompt that instructs the LLM to perform the splitting.
         system_prompt = (
-        "You are an expert information parser. It is your job is to extract two distinct parts "
-        "from the provided text. The first part is the person's hypothesis (and related details)."
-        "Details like the idea, reasoning behind, desired outcomes, and also other such things."
-        "The second part is experimental data, which may come in weird looking formats but it will "
-        "be notably distinct from the hypothesis, reasoning and other 'readable' text. Hopefully, "
-        "if the prior worker did their job correctly, the experiment section will be labelled, "
-        "which should make things much easier for you. Return your answer in valid JSON format "
-        "with exactly two keys: 'hypothesis_text' and 'experiment_data'. The contents of those two "
-        "keys should be strings. If no experiment table is present, return an empty string for "
-        "'experiment_data'."
+            "You are an expert information parser. It is your job is to extract two distinct parts "
+            "from the provided text. The first part is the person's hypothesis (and related details)."
+            "Details like the idea, reasoning behind, desired outcomes, and also other such things."
+            "The second part is experimental data, which may come in weird looking formats but it will "
+            "be notably distinct from the hypothesis, reasoning and other 'readable' text. Hopefully, "
+            "if the prior worker did their job correctly, the experiment section will be labelled, "
+            "which should make things much easier for you. Return your answer in valid JSON format "
+            "with exactly two keys: 'hypothesis_text' and 'experiment_data'. The contents of those two "
+            "keys should be strings. If no experiment table is present, return an empty string for "
+            "'experiment_data'."
         ) # Hard-coding this prompt because 99% chance nobody will touch it anyway.
 
         # Prepare the user prompt with the response text.
@@ -365,3 +365,4 @@ class Iterator:
         experiment_data = parsed_output.get("experiment_data", "").strip()
 
         return [hypothesis_text, experiment_data]
+        
