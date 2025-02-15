@@ -9,7 +9,7 @@ import os
 from setuptools import setup, find_packages
 
 # Prepare project details.
-VERSION = '0.1.3'
+VERSION = '0.2.0'
 DESCRIPTION = 'LLM-based hypothesize-test-evaluate automation.'
 LONG_DESCRIPTION = ('A package that allows for LLMs to create hypotheses, test them '
                     'experimentally, and evaluate whether their hypotheses were correct - within '
@@ -23,7 +23,7 @@ with open(os.path.join(current_location, "README.md"), encoding="utf-8") as fh:
 
 # Setting up package details.
 setup(
-    name="HyTE",
+    name="hyte",
     version=VERSION,
     author="5krus (Eryk Krusinski)",
     author_email="<eryk@krus.co.uk>",
