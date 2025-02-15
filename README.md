@@ -30,5 +30,5 @@ from hyte import Iterator  # LLM-based Hypothesize-Test-Evaluate iterator.
 A more comprehensive, practical usage example is provided [here](https://github.com/5krus/HyTE/tree/prod/Usage_Example).
 
 ## Credit:
-Primary development completed and maintained by [Eryk Krusinski](https://www.eng.cam.ac.uk/profiles/ek620), with feedback from [Dr Viacheslav Sedunin](https://www.eng.cam.ac.uk/profiles/vs440) and [Dr James V. Taylor](https://www.eng.cam.ac.uk/profiles/jvt24). Correspondence: [ek620@cam.ac.uk](ek620@cam.ac.uk). <br/>
+Primary development completed and maintained by [Eryk Krusinski](https://www.eng.cam.ac.uk/profiles/ek620), with feedback from [Dr Viacheslav Sedunin](https://www.eng.cam.ac.uk/profiles/vs440) and [Dr James V. Taylor](https://www.eng.cam.ac.uk/profiles/jvt24). Correspondence: [ek620@cam.ac.uk](ek620@cam.ac.uk). <br/><br/>
 [InnovateUK](https://www.ukri.org/councils/innovate-uk/) funded project during which this idea was conceived.
