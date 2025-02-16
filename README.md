@@ -24,8 +24,7 @@ Primary usage only requires one command, `Iterator(OPTIONS).run(...)`. i.e.
 from hyte import Iterator  # LLM-based Hypothesize-Test-Evaluate iterator.
 
 # Run the iterator.
-[summary, full_log] = Iterator(OPTIONS).run(SYSTEM_PROMPTS, Tools(),
-                                            SAMPLE_DATA = None)
+[summary, full_log] = Iterator(OPTIONS).run(SYSTEM_PROMPTS, Tools(), SAMPLE_DATA = None)
 ```
 A more comprehensive, practical usage example is provided [here](https://github.com/5krus/HyTE/tree/prod/Usage_Example).
 
