@@ -17,7 +17,7 @@ pip install HyTE
 
 ## Usage:
 
-Primary usage only requires one command, `Iterator(OPTIONS).run(...)`. i.e.
+Primary usage only requires one command `Iterator(OPTIONS).run(...)`. i.e.
 
 ```
 # Prepare imports.
