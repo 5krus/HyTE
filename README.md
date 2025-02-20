@@ -1,7 +1,7 @@
 ![HyTE Logo](https://i.imgur.com/VuzljTm.gif)
 
 ## Description:
-Automation of LLM-based Hypothesize-Test-Evaluate methodology.
+Automation of LLM-based Hypothesize-Test-Evaluate methodology for physics discovery.
 <br/><br/>
 
 #### Process Diagram:
