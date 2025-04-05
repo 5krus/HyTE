@@ -7,3 +7,4 @@
 .fleet/*
 .whl
 run_*.txt
+logs
