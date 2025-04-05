@@ -4,6 +4,8 @@ Package Control Settings.
 This script shows how to structure controls variables such that they can be consumed by HyTE.
 """
 
+# pylint: disable=duplicate-code
+
 # Obtain OpenAI key from .env file.
 # WHY: Key is necessary for LLM queries to provide results. Key is held in env file for privacy.
 import os
@@ -157,8 +159,8 @@ SYSTEM_PROMPTS = [
     Then you should input into the function / tool you have (evaluate_desing) this:
     [[0.4, 0.2, 0.15, 0.1], [0.4, 0.2, 0.35, 0.1]]
 
-    If you are given a completed dataframe, then simply reformat it into the above format
-    and output it.
+    If you are given a completed dataframe / json / dict, then simply reformat it into the above
+    format and output it.
 
     Please do not make anything bold or italics.\n\n
     """,

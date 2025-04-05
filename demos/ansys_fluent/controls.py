@@ -4,6 +4,8 @@ Package Control Settings.
 This script shows how to structure controls variables such that they can be consumed by HyTE.
 """
 
+# pylint: disable=duplicate-code
+
 # Obtain OpenAI key from .env file.
 # WHY: Key is necessary for LLM queries to provide results. Key is held in env file for privacy.
 import os
@@ -141,8 +143,8 @@ SYSTEM_PROMPTS = [
     Your task is to extract all the incomplete experiment rows and input them into the tool you
     have as a JSON array of arrays.
 
-    If you are given a completed dataframe, then simply reformat it into the above format
-    and output it.
+    If you are given a completed dataframe / json / dict, then simply reformat it into the above
+    format and output it.
     \n\n
     """,
     # Experiment Completion Checker.
