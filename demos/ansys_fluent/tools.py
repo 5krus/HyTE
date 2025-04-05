@@ -290,12 +290,12 @@ class Tools:
         result_file = os.path.expanduser(
             f"{self.output_dir}/metrics.srp")
         os.makedirs(os.path.dirname(result_file), exist_ok=True)
-        with open(result_file, "w") as file:
+        with open(result_file, "w", encoding='utf-8') as file:
             file.write("")
         self.solver.results.report.surface_integrals.area_weighted_avg(
             surface_names=[f'{self.boundary_planes["outlet"]}'], report_of="absolute-pressure",
             write_to_file=True, file_name=result_file)
-        with open(result_file, "r") as file:
+        with open(result_file, "r", encoding='utf-8') as file:
             report_contents = file.read()
 
 
@@ -304,6 +304,7 @@ class Tools:
         # Extracting absolute pressure.
         pattern = rf'{re.escape(self.boundary_planes["outlet"])}\s+([\d\.]+)'
         match = re.search(pattern, report_contents)
+        absolute_pressure = {}
         if match:
             absolute_pressure = match.group(1)
 
