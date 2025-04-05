@@ -56,6 +56,10 @@ SYSTEM_PROMPTS = [
     - control_point_1: x, r (horizontal distance, radius) position of end diffusor spline point.
 
     As in, their format is control_point_1: [x, r].
+    The acceptable ranges for the control points are:
+    - control_point_1: [1, 1] to [25, 3]
+    - control_point_2: [2, 1.1] to [30, 3.5]
+    Notably, control point 1 dimensions have to always be smaller than control point 2.
 
     Here are the output variables:
     - p_stat_r: static pressure rise; increase in pressure exerted on surfrace when not moving.
