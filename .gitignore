@@ -8,3 +8,6 @@
 .whl
 run_*.txt
 logs
+*.step
+*.png
+*.srp
