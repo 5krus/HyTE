@@ -39,28 +39,26 @@ class Tools:
                 "control_point_1": {
                     "type": "array",
                     "items": {
-                        "type": "array",
-                        "items": {"type": "number"},
-                        "minItems": 2,
-                        "maxItems": 2,
+                        "type": "number",
                         "description": ("Coorddinates of middle spline control point in format "
                                         "[x, r], where x is the distance from the diffusor inlet "
                                         "and r is the distance from the centeral line of rotation. "
                                         "Example [10, 1.5]")
-                    }
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
                 },
                 "control_point_2": {
                     "type": "array",
                     "items": {
-                        "type": "array",
-                        "items": {"type": "number"},
-                        "minItems": 2,
-                        "maxItems": 2,
-                        "description": ("Coorddinates of end-most spline control point in format "
+                        "type": "number",
+                        "description": ("Coorddinates of middle spline control point in format "
                                         "[x, r], where x is the distance from the diffusor inlet "
                                         "and r is the distance from the centeral line of rotation. "
-                                        "Example [15, 2.5]")
-                    }
+                                        "Example [10, 1.5]")
+                    },
+                    "minItems": 2,
+                    "maxItems": 2,
                 }
             },
             "required": ["control_point_1", "control_point_2"]
@@ -84,8 +82,8 @@ class Tools:
 
         # Define and ensure base dicrectory exists.
         # WHY: Avoids future read/write errors.
-        self.base_dir = os.path.expanduser("~/Downloads/HyTE/Fluent_Demo/")
-        self.output_dir = os.path.expanduser("~/Downloads/HyTE/Fluent_Demo/Outputs")
+        self.base_dir = os.path.expanduser("~/Downloads/HyTE/demos/ansys_fluent/")
+        self.output_dir = os.path.expanduser("~/Downloads/HyTE/demos/ansys_fluent//Outputs")
         os.makedirs(self.base_dir, exist_ok=True)
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -118,7 +116,11 @@ class Tools:
 
         # Post-process metrics.
         # WHY: Extracts and converts perf. metrics into a neat dictionary format that AI can read.
-        return self._post_process()
+        return {
+            "control_point_1": control_point_1,
+            "control_point_2": control_point_2,
+            "results": self._post_process(),
+        }
 
     def cleanup(self, pattern: str = "FM_*") -> None:
         """
