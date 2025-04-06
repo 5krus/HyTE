@@ -68,7 +68,7 @@ SYSTEM_PROMPTS = [
 
     Generate a novel hypotheses based on the inputs and outputs that you would want tested.
     Keep prior experiments in consideration, as well as any prior feedback you've received.
-    You will be allowed no more than 40 samples / experiments to evaluate this idea.
+    You will be allowed no more than 3 samples / experiments to evaluate this idea.
 
     Format your answer in this format:
     Hypothesis: ...
@@ -110,7 +110,7 @@ SYSTEM_PROMPTS = [
     Evaluate whether the hypothesis is supported by the experiment data and whether any new insights
     were found.
     Consider suggesting improvements, idea directions. This is a discussion.
-    (Keep in mind that the researcher is limited to 40 experiments per hypothesis.)
+    (Keep in mind that the researcher is limited to 3 experiments per hypothesis.)
     \n\n
     """,
     # Experiment Runner.
