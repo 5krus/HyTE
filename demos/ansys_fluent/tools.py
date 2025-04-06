@@ -11,7 +11,10 @@ This script shows how function-based tools can be made accessible to LLMs.
 # Prepare imports.
 import os
 import re
+import json
 import glob
+import time
+import uuid
 import shutil
 import cadquery as cq
 import ansys.fluent.core as pyf
@@ -26,43 +29,28 @@ class Tools:
     # Prepare tool schemas.
     # WHY: The models need to know what tools they have and how they tools work.
     TOOL_SCHEMA = [{
-        "name": "evaluate_design",
-        "description": (
-            "Given coordinates of a middle spline control point and an end spline control point "
-            "which represent the curve that consittutes the wall of a diffusor. The 2D coordinats "
-            "are converted to splines and converted into a 3D diffusor. The function returns "
-            "performance metrics like static pressure rise."
-        ),
-        "parameters": {
-            "type": "object",
-            "properties": {
-                "control_point_1": {
+    "name": "evaluate_design",
+    "description": (
+        "Given an array of experiments, where each experiment is represented as an array of "
+        "four numbers [cp1_x, cp1_r, cp2_x, cp2_r], return an array of evaluation results. "
+        "Each result is a JSON object containing design metrics."
+    ),
+    "parameters": {
+        "type": "object",
+        "properties": {
+            "experiments": {
+                "type": "array",
+                "items": {
                     "type": "array",
-                    "items": {
-                        "type": "number",
-                        "description": ("Coorddinates of middle spline control point in format "
-                                        "[x, r], where x is the distance from the diffusor inlet "
-                                        "and r is the distance from the centeral line of rotation. "
-                                        "Example [10, 1.5]")
-                    },
-                    "minItems": 2,
-                    "maxItems": 2,
-                },
-                "control_point_2": {
-                    "type": "array",
-                    "items": {
-                        "type": "number",
-                        "description": ("Coorddinates of middle spline control point in format "
-                                        "[x, r], where x is the distance from the diffusor inlet "
-                                        "and r is the distance from the centeral line of rotation. "
-                                        "Example [10, 1.5]")
-                    },
-                    "minItems": 2,
-                    "maxItems": 2,
+                    "items": {"type": "number"},
+                    "minItems": 4,
+                    "maxItems": 4,
+                    "description": "A single experiment with values: [cp1_x, cp1_r, cp2_x, cp2_r]."
                 }
-            },
-            "required": ["control_point_1", "control_point_2"]
-        }
+            }
+        },
+        "required": ["experiments"]
+    }
     }]
 
     def __init__(self):
@@ -71,6 +59,8 @@ class Tools:
         # WHY: Used later as globals. Keeping pylint happy.
         self.sesh = {}
         self.solver = {}
+        self.design_id = ""
+        self.design_name = ""
 
         # Define constants.
         # WHY: Simplifies making changes later.
@@ -87,8 +77,23 @@ class Tools:
         os.makedirs(self.base_dir, exist_ok=True)
         os.makedirs(self.output_dir, exist_ok=True)
 
-    def evaluate_design(self, control_point_1: tuple[float, float],
-                        control_point_2: tuple[float, float]) -> dict:
+    def evaluate_design(self, experiments: list) -> str:
+        """
+        Evaluates multiple designs based on a list of experiments.
+        Each experiment is represented as a list of four numbers: [cp1_x, cp1_r, cp2_x, cp2_r].
+        Returns a JSON array with the evaluation results for each experiment.
+        """
+        results = []
+        for exp in experiments:
+            # Extract control points from the experiment list.
+            cp1 = [exp[0], exp[1]]
+            cp2 = [exp[2], exp[3]]
+            # Evaluate a single design.
+            result_str = self.evaluate_single_design(cp1, cp2)
+            results.append(json.loads(result_str))
+        return json.dumps(results)
+
+    def evaluate_single_design(self, control_point_1: list, control_point_2: list) -> str:
         """
         Generate a diffusor based on spline control points, CFD it, and return relevant metrics.
 
@@ -99,8 +104,15 @@ class Tools:
 
         Returns
         -------
-        dict : A key-value store of metrics. e.g. static pressure rise.
+        str : A json key-value store of metrics. e.g. static pressure rise.
         """
+
+        # Ensure clean environment.
+        # WHY: Avoids errors form reminents of past designs.
+        if self.design_name != "":
+            self._cleanup(f"{self.design_name}")
+        self.design_id = uuid.uuid4().hex[:6]
+        self.design_name = f"design_{self.design_id}.step"
 
         # Create geometry.
         # WHY: Geometry is created, ready for meshing.
@@ -116,32 +128,11 @@ class Tools:
 
         # Post-process metrics.
         # WHY: Extracts and converts perf. metrics into a neat dictionary format that AI can read.
-        return {
+        return json.dumps({
             "control_point_1": control_point_1,
             "control_point_2": control_point_2,
             "results": self._post_process(),
-        }
-
-    def cleanup(self, pattern: str = "FM_*") -> None:
-        """
-        Deletes files matching pattern, mostly used to remove garbage fluent leaves behind.
-
-        Parameters
-        ----------
-        pattern : Pattern to check against when deleting files / folders.
-
-        Returns
-        -------
-        None
-        """
-
-        # Construct full pattern path and iteratively delete files / folders inside pattern.
-        full_pattern = os.path.join(self.base_dir, pattern)
-        for path in glob.glob(full_pattern):
-            if os.path.isdir(path):
-                shutil.rmtree(path)
-            else:
-                os.remove(path)
+        })
 
     ## SUPPORT FUNCTIONS ##
 
@@ -179,7 +170,8 @@ class Tools:
 
         # Export the hollow cylinder as an STL with specified tolerance.
         # WHY: Saving STL so it can be consumed by Fluent later.
-        cq.exporters.export(diffusor, f"{self.output_dir}/design.step", exportType='STEP')
+        cq.exporters.export(diffusor,
+                            f"{self.output_dir}/{self.design_name}", exportType='STEP')
 
         # Create a fluent sesson.
         # WHY: So we can interact with the mesher and solver.
@@ -204,7 +196,7 @@ class Tools:
         # Import geometry and generate surface mesh.
         # WHY: Preparing surface geometry to get volume geometry later.
         wf_to['Import Geometry'].Arguments.set_state({
-            r'FileName': f"{self.output_dir}/design.step",
+            r'FileName': f"{self.output_dir}/{self.design_name}",
             r'ImportCadPreferences': {r'MaxFacetLength': 0,}, r'LengthUnit': r'mm'})
         wf_to['Import Geometry'].Execute()
         wf_to['Add Local Sizing'].AddChildAndUpdate(DeferUpdate=False)
@@ -350,6 +342,44 @@ class Tools:
         self.solver.tui.display.save_picture(f'"{self.output_dir}/plot.png"', 'yes')
 
         # Clean up processing files.
-        self.cleanup("FM_*")
+        self._cleanup("FM_*")
+        if self.design_name != "":
+            self._cleanup(f"{self.design_name}")
 
         return results
+
+    def _cleanup(self, pattern: str = "FM_*") -> None:
+        """
+        Deletes files matching pattern, mostly used to remove garbage fluent leaves behind.
+
+        Parameters
+        ----------
+        pattern : Pattern to check against when deleting files / folders.
+
+        Returns
+        -------
+        None
+        """
+
+        # Exit sessions if exists.
+        # WHY: Avoids accidental license overlap issues.
+        try:
+            self.sesh.exit()
+            self.solver.exit()
+            time.sleep(10)
+        except:
+            pass
+
+        # Construct full pattern path and iteratively delete files / folders inside pattern.
+        full_pattern = os.path.join(self.base_dir, pattern)
+        for path in glob.glob(full_pattern):
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)
+        full_pattern = os.path.join(self.output_dir, pattern) # Output directory as well.
+        for path in glob.glob(full_pattern):
+            if os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                os.remove(path)

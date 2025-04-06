@@ -167,4 +167,4 @@ SYSTEM_PROMPTS = [
     Please do not make anything bold or italics. Do not use markdown.
     Do not output anything other than "COMPLETE" or "INCOMPLETE" as your answer.\n\n
     """
-    ]
+    ] 
