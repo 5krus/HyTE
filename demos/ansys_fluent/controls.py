@@ -76,14 +76,14 @@ SYSTEM_PROMPTS = [
     Insight that would be gained: ...
 
     For specifying desired values, use this format:
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
     ...
     Where each new line indicates a different experiment.
 
     Remember, these experiments are to be ran in the future, so only provide the control points.
-    Keep the outputs (p_stat_r) filled with the placeholder Y.
+    Keep the outputs (exp_r, t_p_loss) filled with the placeholder Y.
     \n\n
     """,
     # Results Evaluator.
@@ -105,7 +105,8 @@ SYSTEM_PROMPTS = [
     As in, their format is control_point_1: [x, r].
 
     Here are the output variables:
-    - p_stat_r: static pressure rise; increase in pressure exerted on surfrace when not moving.
+    - exp_r: expansion ratio.
+    - t_p_loss: total pressure loss.
 
     Evaluate whether the hypothesis is supported by the experiment data and whether any new insights
     were found.
@@ -130,12 +131,13 @@ SYSTEM_PROMPTS = [
     As in, their format is control_point_1: [x, r].
 
     Here are the output variables:
-    - p_stat_r: static pressure rise; increase in pressure exerted on surfrace when not moving.
+    - exp_r: expansion ratio.
+    - t_p_loss: total pressure loss.
 
     The format you will be given is as follows.
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
     Where each new line indicates a different experiment.
     The presence of Y means that the experiment has not ran yet.
     The Y's should be replaced by numbers.
@@ -156,9 +158,9 @@ SYSTEM_PROMPTS = [
     You are checking whether all experiments have been completed.
 
     The format you will be given is as follows.
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
-    control_point_1: [X, R], control_point_2: [X, R] - p_stat_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
+    control_point_1: [X, R], control_point_2: [X, R] - t_p_loss: Y, exp_r: Y
     Where each new line indicates a different experiment.
 
     If all experiments have been completed, output: "COMPLETE".

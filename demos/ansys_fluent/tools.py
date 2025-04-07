@@ -14,6 +14,7 @@ import re
 import json
 import glob
 import time
+import math
 import shutil
 import cadquery as cq
 import ansys.fluent.core as pyf
@@ -58,6 +59,7 @@ class Tools:
         self.sesh = {}
         self.solver = {}
         self.design_count = 1
+        self.expansion_ratio = None
 
         # Define constants.
         # WHY: Simplifies making changes later.
@@ -150,6 +152,13 @@ class Tools:
         # WHY: Avoids giving terrible geometry to Ansys for meshing.
         if not self.inlet_point[0] <= control_point_1[0] <= control_point_2[0]:
             raise ValueError("X coordinate of middle control point must be < x of control point 2.")
+
+        # Calculate expansion ratio.
+        inlet_radius = self.inlet_point[1]
+        outlet_radius = control_point_2[1]
+        inlet_area = math.pi * inlet_radius**2
+        outlet_area = math.pi * outlet_radius**2
+        self.expansion_ratio = outlet_area / inlet_area
 
         # Create diffusor solid block based on sizes.
         # WHY: Diffusor will be read by Ansys mesher (whatever its called).
@@ -292,17 +301,14 @@ class Tools:
 
         ## Extract 1D metrics.
 
-        # Extracting absolute pressure.
-        pattern = rf'{re.escape(self.boundary_planes["outlet"])}\s+([\d\.]+)'
-        match = re.search(pattern, report_contents)
-        absolute_pressure = {}
-        if match:
-            absolute_pressure = match.group(1)
+        # Compute total pressure loss.
+        loss_ratio = self._compute_total_pressure_loss()
 
         # Compile 1D results.
         # WHY: Allows for a neater processing later.
         results = {
-            "absolute-pressure": absolute_pressure
+            "total-pressure-loss-ratio": loss_ratio,
+            "expansion-ratio": self.expansion_ratio
         }
 
 
@@ -390,3 +396,59 @@ class Tools:
             "inlet": f"freeparts-open-cascade-step-translator-7.7-{self.design_count}:1:11",
             "outlet": f"freeparts-open-cascade-step-translator-7.7-{self.design_count}:1:12"
         }
+
+    def _compute_total_pressure_loss(self) -> float:
+        # Define file paths.
+        inlet_total_file = os.path.join(self.output_dir, "inlet_total.txt")
+        outlet_total_file = os.path.join(self.output_dir, "outlet_total.txt")
+        inlet_static_file = os.path.join(self.output_dir, "inlet_static.txt")
+
+        # Write inlet total pressure to file.
+        self.solver.results.report.surface_integrals.area_weighted_avg(
+            surface_names=[self.boundary_planes["inlet"]],
+            report_of="total-pressure",
+            write_to_file=True,
+            file_name=inlet_total_file
+        )
+        with open(inlet_total_file, "r", encoding="utf-8") as file:
+            inlet_total_report = file.read()
+        inlet_numbers = re.findall(r'[\d]+\.[\d]+', inlet_total_report)
+        if inlet_numbers:
+            inlet_total = float(inlet_numbers[-1])
+        else:
+            raise ValueError("No numeric value found in inlet total pressure report.")
+
+        # Write outlet total pressure to file.
+        self.solver.results.report.surface_integrals.area_weighted_avg(
+            surface_names=[self.boundary_planes["outlet"]],
+            report_of="total-pressure",
+            write_to_file=True,
+            file_name=outlet_total_file
+        )
+        with open(outlet_total_file, "r", encoding="utf-8") as file:
+            outlet_total_report = file.read()
+        outlet_numbers = re.findall(r'[\d]+\.[\d]+', outlet_total_report)
+        if outlet_numbers:
+            outlet_total = float(outlet_numbers[-1])
+        else:
+            raise ValueError("No numeric value found in outlet total pressure report.")
+
+        # Write inlet static (absolute) pressure to file.
+        self.solver.results.report.surface_integrals.area_weighted_avg(
+            surface_names=[self.boundary_planes["inlet"]],
+            report_of="absolute-pressure",
+            write_to_file=True,
+            file_name=inlet_static_file
+        )
+        with open(inlet_static_file, "r", encoding="utf-8") as file:
+            inlet_static_report = file.read()
+        static_numbers = re.findall(r'[\d]+\.[\d]+', inlet_static_report)
+        if static_numbers:
+            inlet_static = float(static_numbers[-1])
+        else:
+            raise ValueError("No numeric value found in inlet static pressure report.")
+
+        # Calculate the total pressure loss ratio:
+        # (P₀₁ – P₀₂) / (P₀₁ – P₁)
+        loss_ratio = (inlet_total - outlet_total) / (inlet_total - inlet_static)
+        return loss_ratio
